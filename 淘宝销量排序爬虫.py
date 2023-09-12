@@ -19,7 +19,7 @@ tbPageVersion = 0
 
 #读取设置信息+读取老的商品信息
 def read_settings():
-    global CONST_KEY_WORD, CONST_BEGIN_PAGE, CONST_END_PAGE
+    global CONST_KEY_WORD, CONST_BEGIN_PAGE, CONST_END_PAGE,old_ID_data
     try:
         f = open('./settings.ini', 'r+', encoding='utf8')
         CONST_KEY_WORD = str(f.readline().strip())
@@ -167,7 +167,7 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
             gui_text['bg'] = '#10d269'
             gui_label_now['text'] = '暂无数据'
             gui_label_eta['text'] = '暂无数据'
-
+            month_deals = 0
             # 判断淘宝搜索页面版本
             if tbPageVersion == 0:
                 browser.get(
@@ -192,36 +192,35 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
 
             # 定位元素
             try:
-                if tbPageVersion == 0:
-                    print('using classic version selector')
-                    goods_arr = browser.find_elements(By.CSS_SELECTOR,
-                                                      '#mainsrp-itemlist > div > div > div:nth-child(1)>div')
-                    goods_length = len(goods_arr)
-                    # 遍历商品
-                    for i, goods in enumerate(goods_arr):
-                        gui_label_now['text'] = f'正在获取第{i}个,共计{goods_length}个'
-                        item_name = goods.find_element(By.CSS_SELECTOR,
-                                                       'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-2.title>a').text
-                        item_price = goods.find_element(By.CSS_SELECTOR,
-                                                        'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-1.g-clearfix > div.price.g_price.g_price-highlight > strong').text
-                        item_shop = goods.find_element(By.CSS_SELECTOR,
-                                                       'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.shop > a > span:nth-child(2)').text
-                        month_deals = goods.find_element(By.CSS_SELECTOR,
-                                                         'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-1.g-clearfix > div.deal-cnt').text.replace(
-                            '人付款', '')
-                        ships_from = goods.find_element(By.CSS_SELECTOR,
-                                                        'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.location').text
-                        shop_link = goods.find_element(By.CSS_SELECTOR,
-                                                       'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.shop > a').get_attribute(
-                            'href')
-                        item_link = goods.find_element(By.CSS_SELECTOR,
-                                                       'div.pic-box.J_MouseEneterLeave.J_PicBox > div > div.pic>a').get_attribute(
-                            'href')
-                        goods_item = {"商品名称": item_name, "商品价格": item_price, "月销售量": month_deals,
-                                      "商品店铺名称": item_shop, "归属地": ships_from, "商品链接": item_link}
-                        output_list += [goods_item]
+                # if tbPageVersion == 0:
+                #     print('using classic version selector')
+                #     goods_arr = browser.find_elements(By.CSS_SELECTOR, '#mainsrp-itemlist > div > div > div:nth-child(1)>div')
+                #     goods_length = len(goods_arr)
+                #     # 遍历商品
+                #     for i, goods in enumerate(goods_arr):
+                #         gui_label_now['text'] = f'正在获取第{i}个,共计{goods_length}个'
+                #         item_name = goods.find_element(By.CSS_SELECTOR,
+                #                                        'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-2.title>a').text
+                #         item_price = goods.find_element(By.CSS_SELECTOR,
+                #                                         'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-1.g-clearfix > div.price.g_price.g_price-highlight > strong').text
+                #         item_shop = goods.find_element(By.CSS_SELECTOR,
+                #                                        'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.shop > a > span:nth-child(2)').text
+                #         month_deals = goods.find_element(By.CSS_SELECTOR,
+                #                                          'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-1.g-clearfix > div.deal-cnt').text.replace(
+                #             '人付款', '')
+                #         ships_from = goods.find_element(By.CSS_SELECTOR,
+                #                                         'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.location').text
+                #         shop_link = goods.find_element(By.CSS_SELECTOR,
+                #                                        'div.ctx-box.J_MouseEneterLeave.J_IconMoreNew > div.row.row-3.g-clearfix > div.shop > a').get_attribute(
+                #             'href')
+                #         item_link = goods.find_element(By.CSS_SELECTOR,
+                #                                        'div.pic-box.J_MouseEneterLeave.J_PicBox > div > div.pic>a').get_attribute(
+                #             'href')
+                #         goods_item = {"商品名称": item_name, "商品价格": item_price, "月销售量": month_deals,
+                #                       "商品店铺名称": item_shop, "归属地": ships_from, "商品链接": item_link}
+                #         output_list += [goods_item]
 
-                elif tbPageVersion == 1:
+                if tbPageVersion == 1:
                     print('using new version selector')
                     time.sleep(2)
                     goods_arr = browser.find_elements(By.CSS_SELECTOR,
@@ -241,9 +240,24 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
                                                        f'div:nth-child({i})>a>div> div.ShopInfo--shopInfo--ORFs6rK  > div>a').text
                         month_deals = goods.find_element(By.CSS_SELECTOR,
                                                          f'div:nth-child({i}) > a > div > div.Card--mainPicAndDesc--wvcDXaK > div.Price--priceWrapper--Q0Dn7pN > span.Price--realSales--FhTZc7U').text.replace(
-                            '人付款', '').replace('人收货', '')
+                            '+人付款', '').replace('+人收货', '').replace('万', '0000')
                         ships_from_province = goods.find_element(By.CSS_SELECTOR,
                                                                  f'div:nth-child({i}) > a > div > div.Card--mainPicAndDesc--wvcDXaK > div.Price--priceWrapper--Q0Dn7pN > div:nth-child(5) > span').text
+
+                        shop_link = goods.find_element(By.CSS_SELECTOR,
+                                                       f'div:nth-child({i})>a>div> div.ShopInfo--shopInfo--ORFs6rK  > div>a').get_attribute(
+                            'href')
+                        # 商品地址
+                        item_link = goods.find_element(By.CSS_SELECTOR,
+                                                       f'div:nth-child({i})>a').get_attribute(
+                            'href')
+
+                        # 使用正则表达式来获取商品id的值，并转换为整数
+                        match = re.search(r"id=(\d+)", item_link)
+                        if match:
+                            item_id = int(match.group(1))
+                        else:
+                            item_id = '0'
                         # 定位城市，由于有些没有城市属性所以需要try-except，但是很慢
                         # try:
                         #     ships_from_city = goods.find_element(By.CSS_SELECTOR,
@@ -252,16 +266,17 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
                         #     ships_from_city = ''
                         ships_from_city = ''
 
-                        shop_link = goods.find_element(By.CSS_SELECTOR,
-                                                       f'div:nth-child({i})>a>div> div.ShopInfo--shopInfo--ORFs6rK  > div>a').get_attribute(
-                            'href')
-                        item_link = goods.find_element(By.CSS_SELECTOR,
-                                                       f'div:nth-child({i})>a').get_attribute(
-                            'href')
-                        goods_item = {"商品名称": item_name, "商品价格": item_price, "月销售量": month_deals,
+                        goods_item = {"商品名称": item_name, "商品ID": item_id, "商品价格": item_price,
+                                      "月销售量": month_deals,
                                       "商品店铺名称": item_shop, "归属地": ships_from_province + ' ' + ships_from_city,
                                       "商品链接": item_link}
+                        # 检查月收货人数是否小于30，如果小于30则提前结束当前抓取
+                        if month_deals.isdigit() and int(month_deals) < 30:
+                            print(f"月收货人数小于30，提前结束当前抓取: 第{page}页")
+                            return output_list
+
                         output_list += [goods_item]
+
             except:
                 gui_text['text'] = f'本页面定位元素失败，程序将于5秒后重新尝试爬取'
                 gui_text['bg'] = 'red'
@@ -270,7 +285,7 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
                 print(f'注意:第【{page}】页将跳过如需获取请重新运行程序！')
                 time.sleep(5)
 
-            delay_time = random.randint(1, 7)
+            delay_time = random.randint(3, 8)
             for delay in range(delay_time):
                 gui_label_now['text'] = '-'
                 gui_text['bg'] = '#eeeeee'
@@ -295,41 +310,62 @@ def export_to_excel(data):
         time.sleep(5)
     except Exception as e:
         print("导出数据失败:", e)
-    finally:
-        browser.close()
-        browser.quit()
-        sys.exit()
 
 
+def export_to_excel2(data):
+    try:
+        gui_text['text'] = '正在导出xlsx'
+        output_dataframe = pandas.DataFrame(data)
+        output_dataframe.to_excel('新品库' + f'{time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())}' + '.xlsx',
+                                  index=False)
+        gui_text['text'] = '保存新品库文件完成，准备退出中'
+        time.sleep(5)
+    except Exception as e:
+        print("导出数据失败:", e)
 
 
-# 对比数据，寻找新品id
-# 创建DataFrame，并将商品ID列转换为整数
-output_dataframe = pandas.DataFrame(output_list, columns=["商品名称", "商品ID", "商品价格", "月销售量", "商品店铺名称", "归属地", "商品链接"])
-output_dataframe['商品ID'] = output_dataframe['商品ID'].astype(int)
-# 使用 isin 函数进行比较
-mask = output_dataframe['商品ID'].isin(old_ID_data)
-# 使用布尔索引从新数据中删除匹配的行
-filtered_data = output_dataframe[~mask]
-gui_text['text'] = '正在去重，寻找新品中'
-if not filtered_data.empty:
-    gui_text['text'] = '恭喜找到新品'
-    time.sleep(2)
-else:
-    gui_text['text'] = '寻找新品失败'
-    time.sleep(2)
-    gui_text['text'] = '退出'
-    time.sleep(1)
-    sys.exit()
+def find_new_products(output_list, old_ID_data):
+    try:
+        # 将商品ID列转换为整数
+        output_dataframe = pandas.DataFrame(output_list, columns=["商品名称", "商品ID", "商品价格", "月销售量", "商品店铺名称", "归属地", "商品链接"])
+        output_dataframe['商品ID'] = output_dataframe['商品ID'].astype(int)
+
+        # 使用 isin 函数进行比较
+        mask = output_dataframe['商品ID'].isin(old_ID_data)
+
+        # 使用布尔索引从新数据中删除匹配的行
+        filtered_data = output_dataframe[~mask]
+
+        if not filtered_data.empty:
+            gui_text['text'] = '恭喜找到新品'
+            return filtered_data, '恭喜找到新品'
+        else:
+            gui_text['text'] = '寻找新品失败'
+            return None, '寻找新品失败'
+    except Exception as e:
+        return None, f'出现错误: {str(e)}'
 
 
 # 主函数
 if __name__ == '__main__':
     try:
         read_settings()
-
         browser, page_start, page_end, tbPageVersion = start_browser()
         data = scrape_data(browser, page_start, page_end, tbPageVersion)
+
+        new_products, message = find_new_products(data, old_ID_data)
+
+
+        if new_products is not None:
+            print('找到新款')
+        else:
+            print('寻找新款失败')
+
         export_to_excel(data)
+        export_to_excel2(new_products)
     except Exception as e:
         print("程序发生错误:", e)
+    finally:
+        browser.close()
+        browser.quit()
+        sys.exit()
