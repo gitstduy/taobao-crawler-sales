@@ -324,7 +324,7 @@ def scrape_data(browser, page_start, page_end, tbPageVersion):
 def export_to_excel(data):
     try:
         gui_text['text'] = '正在导出xlsx'
-        output_dataframe = pandas.DataFrame(data)
+        output_dataframe = pandas.DataFrame(data).drop_duplicates()
         output_dataframe.to_excel('淘宝销量榜' + f'{time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())}' + '.xlsx',
                                   index=False)
         gui_text['text'] = '保存文件完成，准备退出中'
@@ -378,16 +378,15 @@ if __name__ == '__main__':
         browser=start_browser()  # 启动浏览器放在循环外部
         login_taobao(browser)
         # 输出要爬取的关键词列表
-
         for keyword in keywords_list:
             CONST_KEY_WORD = keyword  # 设置当前关键词
             browser, page_start, page_end, tbPageVersion = enter_search_page(browser,CONST_KEY_WORD)
             time.sleep(2)  # 等待页面加载
             data = scrape_data(browser, page_start, page_end, tbPageVersion)
             if data:
-                all_data.extend(data)  # 将当前关键词的数据追加到all_data列表中
+                all_data.extend(data)
 
-        # 验证抓取到的数据是否有新品
+        # 验证抓取到的数据是否有新品\
         new_products, message = find_new_products(all_data, old_ID_data)
         if new_products is not None:
             print(f'找到新款')
